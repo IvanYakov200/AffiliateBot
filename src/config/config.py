@@ -1,0 +1,40 @@
+import os
+import logging
+
+# Telegram Bot Token
+TELEGRAM_TOKEN = '7986362245:AAFpjfsKnMNrLKvHuYWmrJBYsdsFgVq242g'
+
+# AppsFlyer Configuration
+APPSFLYER_API_KEY = 'eyJhbGciOiJBMjU2S1ciLCJjdHkiOiJKV1QiLCJlbmMiOiJBMjU2R0NNIiwidHlwIjoiSldUIiwiemlwIjoiREVGIn0.SAe77hnXJwTCxsUYKWXUZYeQBh0ZxofBsx15ZqIGm-LUH5Cwg59yCQ.SDBU--KxNO97em-2.czCqDMnytgcnRO7uUjYOZAFFXmSaJWVUSb41-0bajJwKJt_CEmmcsxd7UY-udHcnk1qih9VFdrPh9GMfM1Fb-WEWFUFZBaMnDaf-7o4eKbGIdUDdPCgVrOvLjf2ilsLTmurwyNhIMmzrmuiSJxOvd_60c8FaSa13XI2fJ4-oCWBoJE3ChYCrQqKLWcYYmRCvP0GBEuwih8Lw-UDjjyhUynT5WmAsQjzFB08v89IHXjviCjRE3NFieDegtaj41l-vO461qOxfnYTmKglQGlFhcgSZP0LxlOeMrQIYQSehEoXQ-UplgwwOiQSIsxW3EDs5XjIaV0jhKVSdj5_MwqJDqdC_.ww3b66UCZDSBTT5qmRzAwQ'
+APPSFLYER_APP_ID = 'id1388812308'
+APPSFLYER_BASE_URL = "https://hq1.appsflyer.com/api/raw-data/export/app"
+
+# Database Configuration
+DATABASE_NAME = 'offers.db'
+
+# Logging Configuration
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
+logger = logging.getLogger(__name__)
+
+# Conversation States
+(
+    OFFER_NAME, OFFER_DESC, OFFER_PAYOUT, OFFER_GEO,
+    OFFER_VERTICAL, OFFER_KPI, OFFER_TRACKER, OFFER_ANTIFRAUD, 
+    OFFER_APPSFLYER_ID, OFFER_EVENT_NAME
+) = range(10)
+
+EDIT_OFFER_CHOOSE, EDIT_FIELD, EDIT_VALUE = range(10, 13)
+
+REPORT_TYPE_SELECT, REPORT_DATES, REPORT_EVENT_NAME, REPORT_FIELDS_SELECT, REPORT_CUSTOM_FIELDS, REPORT_SELECT_OFFER, REPORT_EVENT_INPUT, REPORT_POST_ATTRIBUTION = range(13, 21)
+
+(
+    ANALYSIS_TYPE, ANALYSIS_OFFER_SELECT, ANALYSIS_DATES,
+    ANALYSIS_SOURCE_CHOICE, ANALYSIS_MEDIA_SOURCE, ANALYSIS_PARAMS
+) = range(21, 27)
+
+# Default Admin Username
+DEFAULT_ADMIN_USERNAME = '@immmortalangel'
+DEFAULT_ADMIN_ID = 507720214 
