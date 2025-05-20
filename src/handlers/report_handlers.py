@@ -7,6 +7,9 @@ from utils.report_utils import generate_report
 from handlers.offer_handlers import is_admin
 from io import BytesIO
 from datetime import datetime
+import logging
+
+logger = logging.getLogger(__name__)
 
 async def start_report(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not await is_admin(update.effective_user.id):
@@ -28,8 +31,14 @@ async def start_report(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def select_report_type(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
+    
+    # Исправляем разбор типа отчета
     report_type = query.data.split("_")[1]
+    if report_type == "post":
+        report_type = "post_attribution"
+    
     context.user_data['report_type'] = report_type
+    logger.info(f"Selected report type: {report_type}")
 
     if report_type == 'events':
         event_keyboard = [
@@ -144,9 +153,15 @@ async def select_offer(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return ConversationHandler.END
         
     try:
+        # Отправляем сообщение о начале обработки
+        processing_message = await query.edit_message_text("⏳ Processing your report... This may take a few moments.")
+        
         report_type = context.user_data.get('report_type')
         appsflyer_offer_id = offer[10]
         event_name = offer[11]
+        
+        logger.info(f"Generating report of type: {report_type}")
+        logger.info(f"Offer ID: {offer_id}, AppsFlyer ID: {appsflyer_offer_id}")
         
         params = {
             'from': context.user_data['date_from'],
@@ -154,20 +169,30 @@ async def select_offer(update: Update, context: ContextTypes.DEFAULT_TYPE):
             'app_id': appsflyer_offer_id
         }
         
+        logger.info(f"Report parameters: {params}")
+        
+        csv_data = None
+        
         if report_type == 'events':
             params['event_name'] = context.user_data.get('event_name', event_name)
             endpoint = f"{APPSFLYER_BASE_URL}/{appsflyer_offer_id}/in_app_events_report/v5"
+            logger.info(f"Events endpoint: {endpoint}")
+            csv_data = get_appsflyer_raw_data_custom(endpoint, params)
         elif report_type == 'installs':
             endpoint = f"{APPSFLYER_BASE_URL}/{appsflyer_offer_id}/installs_report/v5"
-        elif report_type == 'post_attribution':
-            csv_data = get_post_attribution_report(params)
-        else:
+            logger.info(f"Installs endpoint: {endpoint}")
             csv_data = get_appsflyer_raw_data_custom(endpoint, params)
+        elif report_type == 'post_attribution':
+            logger.info("Getting post-attribution report")
+            csv_data = get_post_attribution_report(params)
             
         if not csv_data:
-            await query.edit_message_text(f"⚠️ No data for period {params['from']} - {params['to']}")
+            logger.warning(f"No data received for report type: {report_type}")
+            await processing_message.edit_text(f"⚠️ No data for period {params['from']} - {params['to']}")
             return ConversationHandler.END
             
+        logger.info(f"Successfully received data, size: {len(csv_data)} bytes")
+        
         await context.bot.send_document(
             chat_id=update.effective_chat.id,
             document=BytesIO(csv_data),
@@ -175,8 +200,11 @@ async def select_offer(update: Update, context: ContextTypes.DEFAULT_TYPE):
             caption=f"📊 Report for: {offer[1]}\nType: {report_type}"
         )
         
+        # Удаляем сообщение о процессе после успешной отправки
+        await processing_message.delete()
+        
     except Exception as e:
         logger.error(f"Error generating report: {str(e)}")
-        await query.edit_message_text("❌ Error generating report")
+        await processing_message.edit_text("❌ Error generating report")
         
     return ConversationHandler.END 

@@ -29,15 +29,43 @@ def get_appsflyer_raw_data_custom(endpoint: str, params: dict) -> bytes:
 
 def get_post_attribution_report(params: dict) -> bytes:
     """Get post-attribution report from AppsFlyer"""
-    endpoint = f"https://hq1.appsflyer.com/api/raw-data/export/app/{params['app_id']}/fraud-post-inapps/v5"
-    headers = {"Authorization": f"Bearer {APPSFLYER_API_KEY}", "accept": "text/csv"}
+    endpoint = f"{APPSFLYER_BASE_URL}/{params['app_id']}/fraud-post-inapps/v5"
+    headers = {
+        "Authorization": f"Bearer {APPSFLYER_API_KEY}",
+        "Accept": "text/csv"
+    }
+    
+    # Добавляем параметры по умолчанию
+    default_params = {
+        'timezone': 'Europe/Moscow'
+    }
+    params.update(default_params)
     
     try:
-        response = requests.get(endpoint, headers=headers, params=params)
+        logger.info(f"Sending post-attribution request to: {endpoint}")
+        logger.info(f"Parameters: {params}")
+        logger.info(f"Headers: {headers}")
+        
+        response = requests.get(endpoint, headers=headers, params=params, timeout=30)
+        logger.info(f"Response status code: {response.status_code}")
+        logger.info(f"Response headers: {response.headers}")
+        
         response.raise_for_status()
+        
+        if not response.content:
+            logger.warning("Empty response received from post-attribution endpoint")
+            return None
+            
+        logger.info(f"Response content length: {len(response.content)} bytes")
         return response.content
+        
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Post-attribution request error: {str(e)}")
+        if hasattr(e.response, 'text'):
+            logger.error(f"Error response: {e.response.text}")
+        raise
     except Exception as e:
-        logger.error(f"Error: {str(e)}")
+        logger.error(f"Unexpected error in post-attribution: {str(e)}")
         raise
 
 def add_offer_filter(params: dict, offer_id: str) -> dict:
